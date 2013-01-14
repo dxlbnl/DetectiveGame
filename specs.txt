@@ -1,0 +1,37 @@
+protocol implementations
+first have a general chat implementation, username, identifying for a username. use identified usernames for history. unidentified don't have to mind much.
+
+Have IRC like channels for users to join, names starting with #
+commands will start with a /, messages will not
+proposed commands:
+
+JOIN CHANNEL -channelname-
+LEAVE CHANNEL -channelname-
+USER -username-
+PASS -password-
+SEND -channelname- MESSAGE
+SEND -username- MESSAGE
+INFO -channelname- get channel info
+
+users should be able to start a game.
+A game is linked to a channel, so the channelname matches the game name
+
+A game is only alive as long as there's a person in there, same for channels
+
+GAME JOIN -channelname- 
+
+should set you as spectator to the game happening in the channel
+
+after this they should be set as spectator in that game
+from here this should be set in front anything said to the game
+
+GAME -channelname- 
+        ADD -mode- registers you as -mode- for the game
+players can either be Mr X, or play as a number of detectives
+        READY registers you as ready for the game to start
+        if all players are ready and sufficient playercount has been reached, a call to 
+        START will start the game
+        GETSTATE should return information enough to fully sync a game
+        MOVE should send a move to the game manager
+        SURRENDER should end the game for you
+        
