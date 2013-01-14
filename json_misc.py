@@ -4,8 +4,10 @@ import json
 import re
 import cPickle
 
+CONNECTIONS='connections'
+POINTS='points' #formats definition
 class map(object):
-    def __init__(self,filename=None,string=None,mode=None,json_format=None):
+    def __init__(self,filename=None,string=None,mode=None,format=None):
         self.map = {}
         if filename and string:
             raise Exception('supply a filename or a string, not both')
@@ -13,14 +15,14 @@ class map(object):
             if mode == 'pickle' or (filename.endswith('.pickle') and not mode):
                 self.load_pickle_file(filename)
             elif mode == 'json' or (filename.endswith('.json') and not mode):
-                self.load_json_file(filename,json_format)
+                self.load_json_file(filename,format)
             else:
                 raise Exception('Not sure how to parse file')
         elif string:
             if mode=='pickle':
                 self.load_pickle_data(string)
             elif mode=='json':
-                self.load_json_data(filename,json_format)
+                self.load_json_data(filename,format)
             else:
                 raise Exception('Not sure how to parse string')
                 
@@ -45,16 +47,16 @@ class map(object):
             
     #loading functions
     
-    def load_json_file(self, filename, json_format=None):
+    def load_json_file(self, filename, format=None):
         f = open(filename)
         data = f.read()
         f.close()
-        self.load_json_data(data,json_format)
+        self.load_json_data(data,format)
         
-    def load_json_data(self, data, json_format=None):
+    def load_json_data(self, data, format=None):
         jsondata = json.loads(data)
-        map = self.choose_parser(jsondata)
-        if json_format=='connections':
+        map = python_parser().parse(jsondata)
+        if format==CONNECTIONS:
             self.map = self.parse_connections(map)
         else:
             self.map = map
@@ -87,25 +89,7 @@ class map(object):
         return cPickle.dumps(self.map)
         
     #parsing functions
-        
-    def parse_list(self, list):
-        return [self.choose_parser(item) for item in list]
-        
-    def parse_string(self, string):
-        return int(string) if re.search('^[0-9]+$',string) else str(string)
-        
-    def parse_dict(self, dictionary):
-        result = {}
-        for item in dictionary:
-            result[self.parse_string(item)]=self.choose_parser(dictionary[item])
-        return result
-
-    def choose_parser(self, something):
-        return (self.parse_dict(something) if isinstance(something,dict) else
-                self.parse_list(something) if isinstance(something,list) else
-                self.parse_string(something) if isinstance(something,unicode) or isinstance(something,str) else
-                something)
-            
+    
     def parse_connections(self, map):
         original = map['connections']
         connections = original['taxi']+original['metro']+original['bus']
@@ -138,3 +122,28 @@ class map(object):
     def __iter__(self):
         return self.map.__iter__()
         
+        
+def parse_json(data):
+    return python_parser().parse(json.loads(data))
+
+class python_parser(object):    
+    def parse(self, string):
+        return self.choose_parser(string)
+        
+    def parse_list(self, list):
+        return [self.choose_parser(item) for item in list]
+        
+    def parse_string(self, string):
+        return int(string) if re.search('^[0-9]+$',string) else str(string)
+        
+    def parse_dict(self, dictionary):
+        result = {}
+        for item in dictionary:
+            result[self.parse_string(item)]=self.choose_parser(dictionary[item])
+        return result
+
+    def choose_parser(self, something):
+        return (self.parse_dict(something) if isinstance(something,dict) else
+                self.parse_list(something) if isinstance(something,list) else
+                self.parse_string(something) if isinstance(something,unicode) or isinstance(something,str) else
+                something)
